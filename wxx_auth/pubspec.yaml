@@ -12,6 +12,12 @@ dependencies:
     sdk: flutter
 
   get: ^4.7.2
+
+  # 第三方登录（iOS / Android）
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^8.2.0
+  flutter_svg: ^2.0.10+1
+
   http: ^1.4.0
 
   shared_preferences: ^2.5.3
@@ -20,7 +26,7 @@ dependencies:
   flutter_screenutil: ^5.9.0
   flutter_smart_dialog: ^4.9.8+9
   textuality: ^0.0.4
-  games_services: ^5.0.0
+
   flutter_taptap:
     path: ../../flutter_taptap
   flutter_web_plugins:

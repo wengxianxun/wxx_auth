@@ -19,10 +19,9 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    WxxAuth wxxAuthPlugin = WxxAuth();
     MockWxxAuthPlatform fakePlatform = MockWxxAuthPlatform();
     WxxAuthPlatform.instance = fakePlatform;
 
-    expect(await wxxAuthPlugin.getPlatformVersion(), '42');
+    expect(await WxxAuth.getPlatformVersion(), '42');
   });
 }
