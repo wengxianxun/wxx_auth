@@ -9,6 +9,7 @@ export 'src/config/wxx_auth_config.dart';
 export 'src/controller/wxx_auth_controller.dart';
 export 'src/core/auth_method.dart';
 export 'src/models/auth_user.dart';
+export 'src/models/taptap_compliance.dart';
 export 'src/ui/wxx_auth_button.dart';
 export 'src/ui/wxx_auth_view.dart';
 
@@ -40,6 +41,9 @@ class WxxAuth {
   /// - [config.autoRestore] 决定是否尝试静默恢复已有会话。
   static Future<WxxAuthController> init(WxxAuthConfig config) async {
     final methods = config.buildMethods();
+    // 各登录方式平台级 SDK 初始化（如 TapTap 需要 clientId/clientToken 预热）。
+    // 幂等，且需在恢复会话 / 登录之前完成。
+    await Future.wait(methods.map((m) => m.initialize()));
     final controller = WxxAuthController(
       methods,
       ui: config.ui,

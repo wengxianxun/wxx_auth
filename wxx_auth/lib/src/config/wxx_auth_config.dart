@@ -1,9 +1,12 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_taptap/flutter_taptap.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../core/auth_method.dart';
+import '../models/taptap_compliance.dart';
 import '../providers/apple_auth.dart';
 import '../providers/google_auth.dart';
+import '../providers/taptap_auth.dart';
 
 /// 每种登录方式的配置基类。实现类负责 [build] 出对应的 [AuthMethod]。
 abstract class AuthMethodConfig {
@@ -69,6 +72,59 @@ class AppleAuthConfig implements AuthMethodConfig {
         scopes: scopes,
         webAuthenticationOptions: webAuthenticationOptions,
         nonce: nonce,
+      );
+}
+
+/// TapTap 登录配置。
+///
+/// 必填 [clientId] / [clientToken]（来自 TapTap 开发者中心）。
+/// [enableAntiAddiction] 控制登录后是否做防沉迷校验，默认关闭——
+/// 关闭时适合不需要该合规的平台，开启后请实现 [onComplianceResult] 处理合规结果。
+class TaptapAuthConfig implements AuthMethodConfig {
+  const TaptapAuthConfig({
+    required this.clientId,
+    required this.clientToken,
+    this.region = TapTapRegion.cn,
+    this.screenOrientation = 1,
+    this.enableLog = false,
+    this.scopes = const ['public_profile'],
+    this.enableAntiAddiction = false,
+    this.onComplianceResult,
+  });
+
+  final String clientId;
+  final String clientToken;
+
+  /// 服务器区域，默认中国区。
+  final TapTapRegion region;
+
+  /// 屏幕方向：0-自动，1-竖屏，2-横屏。
+  final int screenOrientation;
+
+  /// 是否开启 SDK 日志。
+  final bool enableLog;
+
+  final List<String> scopes;
+
+  /// 是否启用防沉迷（实名 / 未成年人保护）校验。可选，默认关闭。
+  final bool enableAntiAddiction;
+
+  /// 防沉迷校验完成后的回调（无论通过与否都会触发）。
+  final void Function(TaptapComplianceResult)? onComplianceResult;
+
+  @override
+  String get methodId => TaptapAuth.methodId;
+
+  @override
+  AuthMethod build() => TaptapAuth(
+        clientId: clientId,
+        clientToken: clientToken,
+        region: region,
+        screenOrientation: screenOrientation,
+        enableLog: enableLog,
+        scopes: scopes,
+        enableAntiAddiction: enableAntiAddiction,
+        onComplianceResult: onComplianceResult,
       );
 }
 
@@ -147,6 +203,46 @@ class WxxAuthConfig {
         AppleAuthConfig(
           scopes: appleScopes,
           webAuthenticationOptions: appleWebOptions,
+        ),
+      ],
+      ui: ui,
+      autoRestore: autoRestore,
+    );
+  }
+
+  /// 快捷构造：同时启用 Google、Apple 与 TapTap。
+  static WxxAuthConfig googleAppleTapTap({
+    String? googleClientId,
+    String? googleServerClientId,
+    List<String> googleScopes = const ['email', 'profile'],
+    List<AppleIDAuthorizationScopes> appleScopes = const [
+      AppleIDAuthorizationScopes.email,
+      AppleIDAuthorizationScopes.fullName,
+    ],
+    WebAuthenticationOptions? appleWebOptions,
+    required String taptapClientId,
+    required String taptapClientToken,
+    bool taptapEnableAntiAddiction = false,
+    void Function(TaptapComplianceResult)? taptapOnComplianceResult,
+    WxxAuthUiConfig ui = const WxxAuthUiConfig(),
+    bool autoRestore = true,
+  }) {
+    return WxxAuthConfig(
+      methods: <AuthMethodConfig>[
+        GoogleAuthConfig(
+          clientId: googleClientId,
+          serverClientId: googleServerClientId,
+          scopes: googleScopes,
+        ),
+        AppleAuthConfig(
+          scopes: appleScopes,
+          webAuthenticationOptions: appleWebOptions,
+        ),
+        TaptapAuthConfig(
+          clientId: taptapClientId,
+          clientToken: taptapClientToken,
+          enableAntiAddiction: taptapEnableAntiAddiction,
+          onComplianceResult: taptapOnComplianceResult,
         ),
       ],
       ui: ui,

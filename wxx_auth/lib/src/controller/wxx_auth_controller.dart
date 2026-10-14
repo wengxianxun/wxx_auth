@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../config/wxx_auth_config.dart';
 import '../core/auth_method.dart';
 import '../models/auth_user.dart';
+import '../models/taptap_compliance.dart';
+import '../providers/taptap_auth.dart';
 
 /// 基于 GetX 的登录状态控制器（全局单例，由 [WxxAuth.init] 注册）。
 ///
@@ -35,6 +37,9 @@ class WxxAuthController extends GetxController {
 
   /// 正在登录中的方式 id 集合（用于按钮加载态）。
   final RxList<String> signingIn = <String>[].obs;
+
+  /// TapTap 防沉迷校验结果（非 TapTap 登录或已关闭时为 null）。
+  final Rxn<TaptapComplianceResult> compliance = Rxn<TaptapComplianceResult>();
 
   AuthMethod? methodById(String id) =>
       methods.where((m) => m.id == id).firstOrNull;
@@ -71,6 +76,8 @@ class WxxAuthController extends GetxController {
     try {
       final u = await method.signIn();
       user.value = u;
+      // 若本次登录为 TapTap 且开启了防沉迷，记录校验结果。
+      if (method is TaptapAuth) compliance.value = method.lastCompliance;
     } on AuthException catch (e) {
       // 用户主动取消（如 Google 取消）不视为错误，不展示错误提示。
       if (e.code != 'cancelled') error.value = e.message;
@@ -94,5 +101,6 @@ class WxxAuthController extends GetxController {
     }
     user.value = null;
     error.value = '';
+    compliance.value = null;
   }
 }

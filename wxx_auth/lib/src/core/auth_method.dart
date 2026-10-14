@@ -28,6 +28,12 @@ abstract class AuthMethod {
   /// 退出登录（清除本地会话；Apple 无服务端登出，仅清理本地）。
   Future<void> signOut();
 
+  /// 平台 SDK 级初始化（如 TapTap 需要 clientId/clientToken 预热）。
+  ///
+  /// 默认无操作；[WxxAuth.init] 会统一调用，子类的全局单例初始化应在此完成，
+  /// 子类应保证幂等（多次调用只初始化一次）。
+  Future<void> initialize() async {}
+
   /// 静默恢复已有会话（用于冷启动自动登录）。不支持的实现返回 `null`。
   Future<AuthUser?> getCurrentUser();
 
